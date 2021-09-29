@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class FoodType {
     String name;
     String type;
-    String quantity;
+    Integer quantity;
     Nutrition nutrition;
 
 
