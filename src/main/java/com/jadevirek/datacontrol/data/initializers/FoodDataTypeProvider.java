@@ -30,8 +30,8 @@ public class FoodDataTypeProvider {
                 .map(name -> new FoodType(name, null, 1, null))
                 .flatMap(foodTypeRepository::save);
 
-        foodTypeRepository.deleteAll()
-                .thenMany(foodTypeFlux)
+        foodTypeRepository.deleteAll()  // this runs asynchronously, thats why we need one pipeline
+                .thenMany(foodTypeFlux)      // this operations runs on not the same threads
                 .thenMany(foodTypeRepository.findAll())
                 .subscribe(log::info);
     }
