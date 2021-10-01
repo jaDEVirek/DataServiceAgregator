@@ -10,6 +10,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 @Log4j2
@@ -26,6 +27,7 @@ public class FoodDataTypeProvider {
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         Flux<FoodType> foodTypeFlux = Flux.just("Chicken", "Rice", "Pasta", "Banana")
+                .onErrorResume(throwable -> log::error )
                 .map(name -> new FoodType(name, null, 1, null))
                 .flatMap(foodTypeRepository::save);
 

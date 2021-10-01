@@ -17,7 +17,7 @@ public class FoodTypeControler {
         this.foodTypeRepository = foodTypeRepository;
     }
 
-    @GetMapping("/foods")
+    @GetMapping("listener/foods")
     public Flux<FoodType> getFoods(){
         return foodTypeRepository.findAll();
     }

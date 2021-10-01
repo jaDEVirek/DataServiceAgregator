@@ -10,6 +10,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 @Log4j2
 @Component
@@ -25,16 +28,24 @@ public class FoodDataTypeListener {
     @EventListener(ApplicationReadyEvent.class)
     public void listen() {
 
-        Flux<FoodType> saveFoods = WebClient.create()
-                .get()
-                .uri("http://localhost:8080/listener/foods")
-                .retrieve()
-                .bodyToFlux(String.class)
+        Flux<FoodType> saveFoods = getFoods("8090")
+                .onErrorResume(throwable -> getFoods("8080"))
+                .retryWhen(Retry.fixedDelay(1000, Duration.ofSeconds(4)))
                 .map(name -> new FoodType(name, "none", 1, null))
                 .flatMap(foodTypeRepository::save);
 
         foodTypeRepository.deleteAll()  // this runs asynchronously, thats why we need one pipeline
                 .thenMany(saveFoods)
                 .subscribe(log::info);
+    }
+
+    private Flux<String> getFoods(String port) {
+        return WebClient.create()
+                .get()
+                .uri("http://localhost:+" + port + "/listener/foods")
+                .retrieve()
+                .bodyToFlux(String.class)
+                .doOnSubscribe(subscription -> log.info("Connection .... using port: " +port))
+                .doOnError(throwable -> log.info("Connection Failed on port: " + port));
     }
 }
